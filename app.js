@@ -8,14 +8,14 @@ fastify.register(require("@fastify/cors"), {
 
 const { Skolengo } = require('scolengo-api');
 const fs = require('fs');
-const repl = require("repl");
-const config = JSON.parse(fs.readFileSync('skolengo.json'));
+const config = JSON.parse(fs.readFileSync('data/skolengo.json'));
+require('dotenv').config();
 
 // Initialisation de Skolengo
 Skolengo.fromConfigObject(config).then(async user => {
 	async function refreshToken() {
 		config.tokenSet = await user.refreshToken(true);
-		fs.writeFileSync("skolengo.json", JSON.stringify(config));
+		fs.writeFileSync("data/skolengo.json", JSON.stringify(config));
 	}
 	setInterval(refreshToken, 1000 * 60 * 60 * 3)
 	refreshToken()
@@ -23,6 +23,8 @@ Skolengo.fromConfigObject(config).then(async user => {
 	let studentId = (await user.getUserInfo()).id;
 
 	fastify.get("/", async (request, reply) => {
+		if (request.query.key !== process.env.APIKEY) reply.send({ error: "Invalid API key" });
+
 		let currentDate = new Date();
 		let futureDate = new Date();
 		futureDate.setDate(currentDate.getDate() + 14);
