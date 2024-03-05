@@ -22,7 +22,10 @@ Skolengo.fromConfigObject(config, {
 		let studentId = (await user.getUserInfo()).id;
 
 		fastify.get("/", async (request, reply) => {
-			if (request.query.key !== process.env.APIKEY) reply.send({ error: "Invalid API key" });
+			if (request.query.key !== process.env.APIKEY) reply
+				.code(401)
+				.header('Content-Type', 'application/json')
+				.send({ error: "Invalid API key" });
 
 			let currentDate = new Date();
 			let futureDate = new Date();
@@ -30,7 +33,10 @@ Skolengo.fromConfigObject(config, {
 			futureDate = futureDate.toISOString().split("T")[0];
 			currentDate = currentDate.toISOString().split("T")[0];
 
-			reply.send((await user.getAgenda(studentId, currentDate, futureDate)).toICalendar());
+			reply
+				.code(200)
+				.header('Content-Type', 'text/calendar')
+				.send((await user.getAgenda(studentId, currentDate, futureDate)).toICalendar());
 		});
 
 		fastify.listen({ port: 3000, host: "0.0.0.0" }, (err, address) => {
